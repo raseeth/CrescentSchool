@@ -5,6 +5,8 @@ import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { FileService } from './file.service';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -13,9 +15,10 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
   imports: [
     BrowserModule,
     FormsModule,
-    Ng2SmartTableModule
+    Ng2SmartTableModule,
+    HttpClientModule
   ],
-  providers: [],
+  providers: [FileService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
