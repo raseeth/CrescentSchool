@@ -1,8 +1,9 @@
-import { Component, OnInit  } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import * as XLSX from 'xlsx';
 import { FileService } from './file.service';
 import * as fs from 'file-system';
+import { ButtonViewComponent } from './button.component';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +20,12 @@ export class AppComponent implements OnInit {
   onDeleteConfirm(event) {
     if (window.confirm('Are you sure you want to delete?')) {
       event.confirm.resolve();
+      let newList = event.source.data.map(x => Object.assign({}, x));
+      var index = newList.map(function(e) { return e.SNo; }).indexOf(event.data.SNo);
+      if (index > -1) {
+        newList.splice(index, 1);
+      }
+      this.updateFile(newList);
     } else {
       event.confirm.reject();
     }
@@ -27,6 +34,10 @@ export class AppComponent implements OnInit {
   onSaveConfirm(event) {
     if (window.confirm('Are you sure you want to save?')) {
       event.confirm.resolve(event.newData);
+      let newList = event.source.data.map(x => Object.assign({}, x));
+      var index = newList.map(function(e) { return e.SNo; }).indexOf(event.data.SNo);
+      newList[index] = event.newData;
+      this.updateFile(newList);
     } else {
       event.confirm.reject();
     }
@@ -35,31 +46,60 @@ export class AppComponent implements OnInit {
   onCreateConfirm(event) {
     if (window.confirm('Are you sure you want to create?')) {
       event.confirm.resolve(event.newData);
-      this.updateFile(event.newData);
+      event.newData.SNo = event.source.data.length + 1;
+      let newList = event.source.data.map(x => Object.assign({}, x));
+      newList.push(event.newData);
+      this.updateFile(newList);
     } else {
       event.confirm.reject();
     }
   }
 
   updateFile(newData: any){
-    var sheetData = this.data.concat(newData);
-    var wb = XLSX.utils.book_new();
-    var ws = XLSX.utils.json_to_sheet(sheetData);
-    wb.Sheets[0] = ws;
-    XLSX.utils.book_append_sheet(wb, ws);
-    const content = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx', bookSST: false });
-    fs.writeFileSync("/assets/sample.xlsx", content, { encoding: 'binary' });
+    newData.forEach(function(value){
+      delete value.SNo; 
+      delete value.button;      
+    });
+    this.fileService.postData(newData);
   }
 
   ngOnInit(){
     this.fileService.getData().subscribe(data => {
       var wb = XLSX.read(data, {type:"array"});
-      var d = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      var sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      var loadData = [];
+      sheetData.forEach(function(item, index){
+        var d: LooseObject= {};
+        d = item;
+        d.SNo = index + 1;
+        loadData.push(d);
+      })
       var obj: LooseObject = {};
-      if(d.length > 1){
-          Object.keys(d[0]).forEach(function (key) {
+      if(loadData.length > 1){
+          Object.keys(loadData[0]).forEach(function (key) {
+            if(key != 'SNo')
             obj[key]={ title: key };
           });  
+
+          obj.button = {
+            title: 'SMS',
+            type: 'custom',
+            filter: false,
+            editable: false,
+            editor:{
+              type: 'checkbox',
+              config: {
+                true: 'Yes',
+                false: 'No',
+              }
+            },
+            renderComponent: ButtonViewComponent,
+            onComponentInitFunction(instance) {
+              instance.save.subscribe(row => {
+                alert(`${row.name} SMS Sent!`)
+              });
+            }
+          }
 
           this.settings = { 
             delete: {
@@ -74,7 +114,7 @@ export class AppComponent implements OnInit {
             columns: obj 
           };
       }
-      this.data= d;
+      this.data = loadData;
      });
   }
 }

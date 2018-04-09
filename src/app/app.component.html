@@ -1,12 +1,17 @@
 <div style="text-align: center">
+  <br/>
+    <hr/>
   <h1>
     CRESCENT HIGH SCHOOL, PARTHIBANUR
   </h1>  
+  <hr/>
   <div>    
     <div>
-      <h3>Payment Record</h3>  
+        <br/>
+      <h3>Payment Record</h3> 
+      <br/> 
     </div>
-    <ng2-smart-table [settings]="settings" [source]="data" 
+    <ng2-smart-table class="flatTable" [settings]="settings" [source]="data" 
     (deleteConfirm)="onDeleteConfirm($event)"
     (editConfirm)="onSaveConfirm($event)"
     (createConfirm)="onCreateConfirm($event)"></ng2-smart-table>
